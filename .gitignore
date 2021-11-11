@@ -67,3 +67,8 @@ yarn-error.log*
 
 # doc directory
 /doc
+node_modules
+
+#Hardhat files
+cache
+artifacts

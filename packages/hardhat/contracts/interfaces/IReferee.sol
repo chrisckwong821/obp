@@ -8,6 +8,8 @@ interface IReferee {
     function anounceResult(address bettingOperator, bytes calldata data) external;
     function pushResult(address bettingOperator, uint256 item_index) external;
     function pushResultBatch(address bettingOperator) external;
+    function closeItem(address operator, uint256 item) external;
+    function closeItemBatch(address operator) external;
     function revokeResult(address BettingOperator, uint256 item_index) external;
     function verify(address bettingOperator, uint256 _refereeValueAtStake, uint256 maxBet) external;
     //onlyCourt

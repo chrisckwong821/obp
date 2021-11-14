@@ -7,7 +7,7 @@ import "./BettingOperator.sol";
 
 contract Referee {
     // (contributers => amount)
-    bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
+    //bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transferfrom(address,address,uint256)')));
     constructor(uint256 _arbitrationTime, address _court, address _owner, address _OBPToken) {
         court = _court;
         arbitrationTime = _arbitrationTime;
@@ -55,13 +55,14 @@ contract Referee {
     }
 
     function decodeResult(uint256 _encodedResult) public pure returns(uint112 item, uint112 payout, uint32 lastupdatedtime){
-        item = uint112(_encodedResult);
-        payout = uint112(_encodedResult >> 112);
-        lastupdatedtime = uint32(_encodedResult >> 224);
+        item = uint112(_encodedResult >> 144);
+        payout = uint112(_encodedResult >> 32);
+        lastupdatedtime = uint32(_encodedResult);
     }
     function participate(uint256 _amount) external {
-        (bool success, bytes memory data) = OBPToken.call(abi.encodeWithSelector(SELECTOR, address(this), _amount));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), 'participate: TRANSFER_FAILED');
+        address sender = msg.sender;
+        bool success = IERC20(OBPToken).transferFrom(sender, address(this), _amount);
+        require(success , 'participate: TRANSFER_FAILED');
         stakers[msg.sender] = _amount;
         totalStaked += _amount;
     }
@@ -89,41 +90,54 @@ contract Referee {
 
     // select an index in the result mapping and push to the operator
     function pushResult(address bettingOperator, uint256 item_index) external onlyOwner {
-        bytes memory data;
         uint256 item;
-        bytes32 result = results[bettingOperator][item_index];
+        bytes memory result = results[bettingOperator];
+        uint256 indexBytes = 32*item_index;
         assembly {
-                item := mload(add(result,32))
+                item := mload(add(result, indexBytes))
                 }
         (, , uint32 parsedPayoutLastUpdatedTime) = decodeResult(item);
                 // only push result that passes the arbitration window
         if (block.timestamp > arbitrationTime + parsedPayoutLastUpdatedTime) {
-        BettingOperator(bettingOperator).injectResultBatch(data);
+            BettingOperator(bettingOperator).injectResult(item);
     }
 }
     // push the entire result mapping to the operator    
-    function pushResultBatch(address bettingOperator) external onlyOwner {
-        bytes memory data;
+    function pushResultBatch(address bettingOperator) external onlyOwner {//(bytes memory data){
+        
         uint256 item;
         bytes memory result = results[bettingOperator];
-        for (uint256 i =32; i < result.length; i+32) {
-            assembly {
-                item := mload(add(result,i))
-                }
-        (uint112 parsedItem, uint112 parsedPayout, uint32 parsedPayoutLastUpdatedTime) = decodeResult(item);
-                // only push result that passes the arbitration window
+        //return result.length;
+         bytes memory data;
+         for (uint256 i = 0; i < result.length; i+=32) {
+             assembly {
+                 item := mload(add(result, add(32, i)))
+                 }
+         (uint112 parsedItem, uint112 parsedPayout, uint32 parsedPayoutLastUpdatedTime) = decodeResult(item);
+        //         // only push result that passes the arbitration window
             if (block.timestamp > arbitrationTime + parsedPayoutLastUpdatedTime) {
-                data = abi.encodePacked(encodeResult(parsedItem, parsedPayout, parsedPayoutLastUpdatedTime), data);
+                data = abi.encodePacked(data, item);
             }
-        }
+            require(parsedItem > 0, "DEBUG: parseItem shd > 0");
+         }
         // push result
+        
         BettingOperator(bettingOperator).injectResultBatch(data);
     }
 
-    function revokeResult(address _BettingOperator, uint256 item_index) external onlyOwner {
+    function revokeResult(address bettingOperator, uint256 item) external onlyOwner {
         //wipe out the whole entry, then you can push again, the original result in operator would be overrided as the result is read in a list.
-        //eg result in operator{item, payout, lastupdatedtime} [1,1000, xxxx], [1,0, xxxx] => pool for Item1 would end up with 0.
-        results[_BettingOperator][item_index] = 0;
+        //for example result in operator {item, payout, lastupdatedtime} = [1,1000, xxxx], [1,0, xxxx] => pool for Item1 would end up with 0.
+        results[bettingOperator][item] = 0;
+    }
+
+   function closeItem(address bettingOperator, uint256 item) external onlyOwner {
+        BettingOperator(bettingOperator).closeItem(item);
+   }
+    function closeItemBatch(address bettingOperator) external onlyOwner {
+        bytes memory result = results[bettingOperator];
+        // push result
+        BettingOperator(bettingOperator).closeItemBatch(result);
     }
     function verify(address bettingOperator, uint256 _refereeValueAtStake, uint256 maxBet) external onlyOwner {
         freezedUnderReferee += _refereeValueAtStake;

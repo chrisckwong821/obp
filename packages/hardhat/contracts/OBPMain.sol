@@ -37,9 +37,9 @@ contract OBPMain {
         address owner = msg.sender;
         return IBettingOperatorDeployer(IBODeployer).createBettingOperator(OBPToken, owner, roothash, court);
     }
-    function deployReferee() external returns(address) {
+    function deployReferee() external returns(address referee) {
         address owner = msg.sender;
-        return IRefereeDeployer(IRDeployer).createReferee(court, owner, OBPToken);
+        address referee = IRefereeDeployer(IRDeployer).createReferee(court, owner, OBPToken);
     }
 
     function addSupportedToken(address ERC20Token) onlyMigrator external {

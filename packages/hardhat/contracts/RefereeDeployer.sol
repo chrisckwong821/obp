@@ -5,7 +5,7 @@ import './Referee.sol';
 
 contract RefereeDeployer is IRefereeDeployer {
     address public arbitrationTimeSetter;
-    uint256 arbitrationTime = 1 days;
+    uint256 arbitrationTime = 1 seconds;
     address[] public allReferees;
 
     event RefereesCreated(address operator, uint);
@@ -26,8 +26,16 @@ contract RefereeDeployer is IRefereeDeployer {
          return keccak256(abi.encodePacked(_arbitrationTime, court, owner, OBPToken));
      }
 
+    function getcreatedAddress(address court, address owner, address OBPToken) public view returns(address referee) {
+        bytes memory bytecode  = refereeByteCode(arbitrationTime, court, owner, OBPToken);
+        bytes32 salt = refereeSalt(arbitrationTime, court, owner, OBPToken);
+        bytes32 hash = keccak256(
+            abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(bytecode))
+        );
+        return address(uint160(uint(hash)));
+    }
+
     function createReferee(address court, address owner, address OBPToken) external override returns(address referee){
-        address referee;
         bytes memory bytecode = refereeByteCode(arbitrationTime, court, owner, OBPToken);
         bytes32 salt = refereeSalt(arbitrationTime, court, owner, OBPToken);
         assembly {

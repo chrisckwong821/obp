@@ -22,12 +22,14 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     log: true,
   });
   const OBPToken = await ethers.getContract("OBPToken", deployer);
+  //const balance = await OBPToken.balanceOf(deployer);
+  //console.log("deployer balance :", balance );
   const CourtV1 = await ethers.getContract("CourtV1", deployer);
 
   await deploy("AdminUpgradeabilityProxy", {
     // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
     from: deployer,
-    args: [ CourtV1.address, OBPToken.address, "0x"],
+    args: [ CourtV1.address, OBPToken.address, "0x"], //(logic, admin, initialCallBytes)
     log: true,
   });
   const AdminUpgradeabilityProxy = await ethers.getContract("AdminUpgradeabilityProxy", deployer);
@@ -51,6 +53,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     // args: [ "Hello", ethers.utils.parseEther("1.5") ],
     log: true,
   });
+  await deploy("BettingRouter", {
+    // Learn more about args here: https://www.npmjs.com/package/hardhat-deploy#deploymentsdeploy
+    from: deployer,
+    args: [ deployer, OBPToken.address ],
+    log: true,
+  });
   const OBPMain = await ethers.getContract("OBPMain", deployer);
   const RefereeDeployer = await ethers.getContract("RefereeDeployer", deployer);
   const BettingOperatorDeployer = await ethers.getContract("BettingOperatorDeployer", deployer);
@@ -58,41 +66,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   await OBPMain.setRefereeOperatorDeployer(RefereeDeployer.address);
   
   await OBPMain.setBettingOperatorDeployer(BettingOperatorDeployer.address);
-
-  const R_length = await RefereeDeployer.allRefereesLength();
-  const OB_length = await BettingOperatorDeployer.allOperatorsLength();
-  console.log(R_length, "old");
-  console.log(OB_length, "old");
-
-  //console.log(RefereeDeployer);
-  await OBPMain.deployReferee();
-  await OBPMain.deployBettingOperator(123);
-  //console.log(hash);
-  const length_ = await RefereeDeployer.allRefereesLength();
-  for (i = 0; i < length_; i++) {
-    var allR = await RefereeDeployer.allReferees(i);
-    console.log(allR);
-  }
-  const length__ = await BettingOperatorDeployer.allOperatorsLength();
-  for (i = 0; i < length__; i++) {
-    var allR = await BettingOperatorDeployer.allOperators(i);
-    console.log(allR);
-  }
   
-
-  // const hashcode = await RefereeDeployer.refereeCodeHash();
-  // console.log(hashcode);
-
-  const proxy = await ethers.getContractAt("CourtV1", AdminUpgradeabilityProxy.address);
-  //console.log(proxy);
-  //proxy.sue(aReferee, aBettingOperator);
-
-
-  const R_length2 = await RefereeDeployer.allRefereesLength();
-  const OB_length2 = await BettingOperatorDeployer.allOperatorsLength();
-  console.log(R_length2, "should be +1 from old");
-  console.log(OB_length2, "should be +1 from old");
-
 
   // Getting a previously deployed contract
 

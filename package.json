@@ -68,7 +68,10 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.3.2",
-    "@openzeppelin/contracts-upgradeable": "^4.3.2"
+    "@openzeppelin/contracts-upgradeable": "^4.3.2",
+    "bytes32": "^0.0.3",
+    "eip-712": "^0.4.3",
+    "web3": "^1.6.0"
   },
   "devDependencies": {
     "husky": "^7.0.2"

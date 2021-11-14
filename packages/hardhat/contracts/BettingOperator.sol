@@ -21,7 +21,7 @@ contract BettingOperator {
     uint256 public feeToOperator;
     uint256 public feeToReferee;
     uint256 public feeToCourt;
-
+    //available amount to be claimed
     uint256 public unclaimedFeeToOperator;
     uint256 public unclaimedFeeToReferee;
     uint256 public unclaimedFeeToCourt;
@@ -31,10 +31,12 @@ contract BettingOperator {
     bool public canWithdraw = false;
     //verify by an Referee
     bool public verified = false;
-    mapping (uint256 => Pool) bettingItems;
+    bool public setreferee = false;
+    bool public setbettoken = false;
+    //
+    mapping (uint256 => Pool) public bettingItems;
 
     struct Pool{
-        uint256 Id;
         //current total bet
         uint256 poolSize;
         //bettor => amount 
@@ -54,6 +56,14 @@ contract BettingOperator {
     //snapshot upon confiscation
     uint256 public totalUnclaimedPayoutAfterConfiscation;
     
+    uint private unlocked = 1;
+
+    modifier lock() {
+        require(unlocked == 1, 'OBP: LOCKED');
+        unlocked = 0;
+        _;
+        unlocked = 1;
+    }
 
     constructor (address _OBPToken, address _owner, uint256 _roothashOfbettingItems, address _court, uint256 _feeToOperator, uint256 _feeToReferee, uint256 _feeToCourt) {
         OBPToken = _OBPToken;
@@ -65,10 +75,20 @@ contract BettingOperator {
         feeToCourt = _feeToCourt;
     }
 
+    function setBetToken(address _bettoken) onlyOwner external {
+        require(setbettoken == false, "setBetToken:: bettoken is already set") ;
+        setbettoken = true;
+        betToken = _bettoken;
+    }
+    function setReferee(address _referee) onlyOwner external {
+        require(setreferee == false, "setReferee:: referee is already set") ;
+        setreferee = true;
+        referee = _referee;
+    }
     function decodeResult(uint256 _encodedResult) public pure returns(uint112 item, uint112 payout, uint32 lastupdatedtime){
-        item = uint112(_encodedResult);
-        payout = uint112(_encodedResult >> 112);
-        lastupdatedtime = uint32(_encodedResult >> 224);
+        item = uint112(_encodedResult>> 144);
+        payout = uint112(_encodedResult >> 32);
+        lastupdatedtime = uint32(_encodedResult);
     }
 
     modifier onlyReferee() {
@@ -87,7 +107,7 @@ contract BettingOperator {
     }
 
     function withdrawOperatorFee(uint256 _amount, address _to)  external onlyOwner {
-        require(unclaimedFeeToOperator > 0, "withdrawOperatorFee:: THAT IS NO UNCLAIMED AMOUTN");
+        require(unclaimedFeeToOperator - _amount >= 0, "withdrawOperatorFee:: THAT IS NO UNCLAIMED AMOUTN");
         unclaimedFeeToOperator -= _amount;
         (bool result) = IERC20(betToken).transfer(_to, _amount);
         require(result, "withdrawOperatorFee: TRANSFER_FAILED");
@@ -98,14 +118,14 @@ contract BettingOperator {
     }
 
     function withdrawRefereeFee(uint256 _amount) public {
-        require(unclaimedFeeToReferee > 0, "withdrawRefereeFee:: THAT IS NO UNCLAIMED AMOUTN");
+        require(unclaimedFeeToReferee - _amount >= 0, "withdrawRefereeFee:: THAT IS NO UNCLAIMED AMOUTN");
         unclaimedFeeToReferee -= _amount;
         (bool result) = IERC20(betToken).transfer(referee, _amount);
         require(result, "withdrawRefereeFee: TRANSFER_FAILED");
     }
 
     function withdrawCourtFee(uint256 _amount) public {
-        require(unclaimedFeeToCourt > 0, "withdrawCourtFee:: THAT IS NO UNCLAIMED AMOUTN");
+        require(unclaimedFeeToCourt - _amount >= 0, "withdrawCourtFee:: THAT IS NO UNCLAIMED AMOUTN");
         unclaimedFeeToCourt -= _amount;
         (bool result) = IERC20(betToken).transfer(court, _amount);      
         require(result, "withdrawCourtFee: TRANSFER_FAILED");
@@ -127,24 +147,48 @@ contract BettingOperator {
         refereeValueAtStake = _refereeValueAtStake;
         maxBetLimit = _maxBet;
     }
-    function placeBet(uint item, uint amount, address bettor) external {
+    function _safeTransferFrom(
+        address token,
+        address from,
+        address to,
+        uint256 value
+    ) internal {
+        // bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(0x23b872dd, from, to, value));
+        require(
+            success && (data.length == 0 || abi.decode(data, (bool))),
+            'TransferHelper::transferFrom: transferFrom failed'
+        );
+    }
+
+    //directly place bet without going through Router,if the operator is approved for moving yr BetToken.
+    // oherwise approve the BettingRouter for the betToken to achieve one-off aproval.
+    function placeBet(uint item, uint amount, address bettor, bool isThroughRouter) lock external {
         require(bettingItems[item].isClosed == false, "the betting item is already closed"); 
         require(maxBetLimit - totalOperatorBet > amount, "placeBet:: the maxBet exceeds after taking this bet");
-        (bool success, bytes memory data) = betToken.call(abi.encodeWithSelector(SELECTOR, address(this), amount));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), 'placeBet: TRANSFER_FAILED');
+        if (!isThroughRouter) {
+            _safeTransferFrom(betToken, bettor, address(this), amount);
+        }
+        // this line gets the exact amount that is deposited by the bettor
+        //1. totalClaimedPayout - money that got drawn by winning bettor
+        //2 .totalBet is allBet placed
+        //3. unclaimedFee(s) are fee entitled to various parties, they just temporary sits at this address. 
+        amount = IERC20(betToken).balanceOf(address(this)) 
+        + totalClaimedPayout 
+        - totalOperatorBet
+        - unclaimedFeeToOperator - unclaimedFeeToReferee - unclaimedFeeToCourt;
 
         unclaimedFeeToOperator += (amount * feeToOperator) / 10**6;
         unclaimedFeeToReferee += (amount * feeToReferee) / 10**6;        
-        unclaimedFeeToCourt += (amount * feeToCourt) / 10**6;        
+        unclaimedFeeToCourt += (amount * feeToCourt) / 10**6;
 
-        amount = amount * ( 10**6 - feeToReferee - feeToOperator - feeToCourt) / 10**6;
-
-        bettingItems[item].bettors[bettor] = amount;
-        bettingItems[item].poolSize += amount;
-        totalOperatorBet += amount;
+        uint256 Poolamount = amount * ( 10**6 - feeToReferee - feeToOperator - feeToCourt) / 10**6;
+        bettingItems[item].bettors[bettor] = Poolamount;
+        bettingItems[item].poolSize += Poolamount;
+        totalOperatorBet += Poolamount;
     }
     // this is a function to withdraw normally, unless there is OBP compensation, only 1 ERC20 transfer is involved.
-    function withdraw(uint item, address _to)  external {
+    function withdraw(uint item, address _to) external {
         address bettor = msg.sender;
         require(bettingItems[item].isClosed, "the betting item is still open"); 
         require(bettingItems[item].payout > 0, "withdraw:: THERE is no Payout in this item");
@@ -153,6 +197,7 @@ contract BettingOperator {
         totalClaimedPayout += amount;
         //remove the bet before transferring
         bettingItems[item].bettors[msg.sender] = 0;
+
         (bool result) = IERC20(betToken).transfer(_to, amount);
         require(result, "withdraw: TRANSFER_FAILED");
         if (amountOBP > 0 ) {
@@ -163,26 +208,38 @@ contract BettingOperator {
         }
     }
 
+    function injectResult(uint256 item) external onlyReferee {
+    (uint112 parsedItem, uint112 parsedPayout,) = decodeResult(item);
+    // 0 can be a empty entry pushed from Referee
+    if (parsedItem != 0 && bettingItems[item].isClosed == false) {
+        // allow an update of payout in case a wrong value is pushed.
+        // close is not called in this function for the purpose of changing
+        // when an item is closed, bettor starts to claim and there is no way to correct any mistake
+        uint256 oldPayout = bettingItems[parsedItem].payout;
+        bettingItems[parsedItem].payout = parsedPayout;
+        totalReleasedPayout = totalReleasedPayout + parsedPayout - oldPayout;
+    }   
+    }
     //can be any number of result to be pushed 
     function injectResultBatch(bytes calldata data) external onlyReferee {
-
         uint256 item;
         //uint256 parsedPayoutLastUpdatedTime;
-        for (uint i =32; i < data.length; i+=32) {
+        bytes memory tmpdata = data;
+        for (uint256 i =0; i < tmpdata.length; i+=32) {
             assembly {
-                item := calldataload(i)
+                item := mload(add(tmpdata, add(32, i)))
                 }
-            (uint112 parsedItem, uint112 parsedPayout,) = decodeResult(item);
+        (uint112 parsedItem, uint112 parsedPayout, uint32 parsedPayoutLastUpdatedTime) = decodeResult(item);
+        require(parsedItem >0 , "DEBUGOP");
             // 0 can be a empty entry pushed from Referee
-            if (parsedItem != 0 && bettingItems[item].isClosed == false) {
+            if (parsedItem != 0 && bettingItems[uint256(item)].isClosed == false) {
                 // allow an update of payout in case a wrong value is pushed.
                 // close is not called in this function for the purpose of changing
                 // when an item is closed, bettor starts to claim and there is no way to correct any mistake
                 uint256 oldPayout = bettingItems[parsedItem].payout;
                 bettingItems[parsedItem].payout = parsedPayout;
                 totalReleasedPayout = totalReleasedPayout + parsedPayout - oldPayout;
-            }
-            
+            }   
         }
         // assert at last but not in the loop for efficient gas
         require(totalOperatorBet >= totalReleasedPayout ,"injectResult::the released payout is bigger than the total bet");
@@ -196,10 +253,11 @@ contract BettingOperator {
 
     function closeItemBatch(bytes calldata data) external onlyReferee {
         uint256 item;
+        bytes memory tmpdata = data;
         //this is for closing item only, assuming data is parsed in itemId:payout::timestamp format, skipping every 32 bits that is payout data.
-        for (uint i =32; i < data.length; i+=32) {
+        for (uint i =0; i < tmpdata.length; i+=32) {
             assembly {
-                item := calldataload(i)
+                item := mload(add(tmpdata, add(32, i)))
                 }
             (uint112 parsedItem, , ) = decodeResult(item);
             bettingItems[parsedItem].isClosed = true;

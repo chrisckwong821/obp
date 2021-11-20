@@ -1,16 +1,20 @@
-<<<<<<< HEAD
-=======
 # 🏗 Online Betting Protocol
 Bet with optimal fee, no chance of rugpull.
 
 ##  Contracts deployed on Kovan Testnet
-=======
+---
 [OBPMain](https://kovan.etherscan.io/address/0x3D80793CaB90A0FaCD1Cd4Ad9326A6c9eEdCcD56#code)
+
 [OBPToken](https://kovan.etherscan.io/address/0xdC1BC2d84dFeF19478B843234c38b8696bfA81f7#code)
+
 [CourtProxy](https://kovan.etherscan.io/address/0x07A561D151E963812e05a8a5639Ab7A61c402178#code)
+
 [CourtLib(V1)](https://kovan.etherscan.io/address/0x983C70efc7aA04830A7093ec267dd8B2a6e3861a#code)
+
 [BettingOperatorDeployer](https://kovan.etherscan.io/address/0x16210fF94FF33C59a9C61eB1Fa1Ef310856045Bb#code)
+
 [RefereeDeployer](https://kovan.etherscan.io/address/0x0f4292c5fB9aFB0eED779522920D1f9d79a8BD41#code)
+
 [BettingRouter](https://kovan.etherscan.io/address/0x39E7F6de3De7037f3eF48327C52Cc9336Ed80EAf#code)
 
 ## High-Level Overview
@@ -18,7 +22,7 @@ Bet with optimal fee, no chance of rugpull.
 
 
 ## Introduction:
-=======
+---
 OBP = Online Betting Protocol for everyone!
 There are billions of dollar being gambled on sport&Esport events every year. Yet people can hardly find a fair, decentralised and customized betting place for events they would like to bet. Result of sport events are exposed to everyone; rather than creating an oracle network when only whitelisted operator can run, OBP allows everyone to be a bettor, refereee, event operator, as well as a court member for keeping OBP as a fair place!
 

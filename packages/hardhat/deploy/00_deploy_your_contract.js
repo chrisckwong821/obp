@@ -22,6 +22,10 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
     log: true,
   });
   const OBPToken = await ethers.getContract("OBPToken", deployer);
+  //await OBPToken.mint();
+  //await OBPToken.mint();
+  const E32 = await OBPToken.balanceOf(deployer);
+  console.log(E32);
   //const balance = await OBPToken.balanceOf(deployer);
   //console.log("deployer balance :", balance );
   const CourtV1 = await ethers.getContract("CourtV1", deployer);
@@ -105,12 +109,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
   // Verify your contracts with Etherscan
   // You don't want to verify on localhost
-  if (chainId !== localChainId) {
-    await run("verify:verify", {
-      address: YourContract.address,
-      contract: "contracts/OBPToken.sol:OBPToken",
-      contractArguments: [],
-    });
-  }
+  // if (chainId !== localChainId) {
+  //   await run("verify:verify", {
+  //     address: OBPToken.address,
+  //     contract: "contracts/OBPToken.sol:OBPToken",
+  //     contractArguments: [],
+  //   });
+  // }
 };
-module.exports.tags = ["YourContract"];
+module.exports.tags = ["OBPToken"];

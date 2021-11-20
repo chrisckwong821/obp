@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import './interfaces/IRefereeDeployer.sol';
@@ -14,9 +15,9 @@ contract OBPMain {
     address public IBODeployer;
     address public IRDeployer;
     //registered referees
-    address[] public referees;
+    address[] public allReferees;
     //registered bettingOperators
-    address[] public bettingOperators;
+    mapping(uint256 => address) public allOperators;
     //supported token to place bet, this list needs to be centralized as fee is collected in this unit, and needs to be swapped back to OBP later 
     address[] public supportedTokens;
 
@@ -32,14 +33,23 @@ contract OBPMain {
     }
 
 
-
-    function deployBettingOperator(uint256 roothash) external returns(address){
+    function allRefereesLength() public view returns (uint) {
+        return allReferees.length;
+    }
+    function deployBettingOperator(uint256 roothash) external returns(address operator){
         address owner = msg.sender;
-        return IBettingOperatorDeployer(IBODeployer).createBettingOperator(OBPToken, owner, roothash, court);
+        address OBPMain = address(this);
+        require(allOperators[roothash] == address(0), "deployBettingOperator:: this roothash is occupied, pls render another rootHash");
+        address operator = IBettingOperatorDeployer(IBODeployer).createBettingOperator(OBPMain,OBPToken, owner, roothash, court);
+        allOperators[roothash] = operator;
+        
+
     }
     function deployReferee() external returns(address referee) {
         address owner = msg.sender;
         address referee = IRefereeDeployer(IRDeployer).createReferee(court, owner, OBPToken);
+        allReferees.push(referee);
+
     }
 
     function addSupportedToken(address ERC20Token) onlyMigrator external {

@@ -17,13 +17,13 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   //const R_length = await RefereeDeployer.allRefereesLength();
   await OBPMain.deployBettingOperator(roothash);
 
-  const operatorAddress = await BettingOperatorDeployer.allOperators(roothash);
-  //console.log( "deployed operator at : ", operatorAddress);
+  const operatorAddress = await OBPMain.allOperators(roothash);
+  console.log( "deployed operator at : ", operatorAddress);
   const RefereDeployer = await ethers.getContractAt("RefereeDeployer", OBPMain.IRDeployer());
 
-  const RefereeLength = await RefereDeployer.allRefereesLength();
+  const RefereeLength = await OBPMain.allRefereesLength();
   for (i = 0; i < RefereeLength; i++) {
-    var invitedReferee = await RefereDeployer.allReferees(i);
+    var invitedReferee = await OBPMain.allReferees(i);
     console.log(invitedReferee);
   }
   const Operator = await ethers.getContractAt("BettingOperator", operatorAddress);
@@ -36,7 +36,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   const valueAtStake = 10000;
   const maxBet = 10000;
   const Referee = await ethers.getContractAt("Referee", invitedReferee);
-  const verify = await Referee.verify(operatorAddress, valueAtStake, maxBet); 
+  const verify = await Referee.verify(operatorAddress, valueAtStake, maxBet, 0); 
   console.log('referee : ', invitedReferee, " has verified the operator at ",operatorAddress,  " for an valueAtStake of  :",  valueAtStake, " with a maxBet of : ", maxBet);
   // const hashcode = await RefereeDeployer.refereeCodeHash();
   // console.log(hashcode);

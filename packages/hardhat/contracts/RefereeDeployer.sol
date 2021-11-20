@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import './interfaces/IRefereeDeployer.sol';
@@ -6,12 +7,10 @@ import './Referee.sol';
 contract RefereeDeployer is IRefereeDeployer {
     address public arbitrationTimeSetter;
     uint256 arbitrationTime = 1 seconds;
-    address[] public allReferees;
+    //address[] public allReferees;
 
-    event RefereesCreated(address operator, uint);
-    function allRefereesLength() public view returns (uint) {
-        return allReferees.length;
-    }
+    event RefereesCreated(address operator);
+
 
     function refereeCodeHash() public pure returns (bytes memory) {
         return type(Referee).creationCode;
@@ -41,8 +40,8 @@ contract RefereeDeployer is IRefereeDeployer {
         assembly {
             referee := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
         }
-        allReferees.push(referee);
-        emit RefereesCreated(referee, allReferees.length);
+        //allReferees.push(referee);
+        emit RefereesCreated(referee);
     }
 
     function setArbitrationWindow(uint256 _arbitrationTime) external override {

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import './interfaces/IBettingOperatorDeployer.sol';
@@ -9,8 +10,7 @@ contract BettingOperatorDeployer is IBettingOperatorDeployer {
 
     address public feeSetter;
     // rootHash => bettingOperator
-    //address[] public allOperators;
-    mapping(uint256 => address) public allOperators;
+    //mapping(uint256 => address) public allOperators;
 
     event OperatorCreated(address operator, uint256 roothash);
     function bettingOperatorCodeHash() public pure returns (bytes memory) {
@@ -18,35 +18,34 @@ contract BettingOperatorDeployer is IBettingOperatorDeployer {
     }
 
 
-    function bettingOperatorSalt(address OBPToken, address owner, uint256 roothash, address court, uint256 _feeToOperator,uint256 _feeToReferee, uint256 _feeToCourt) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(OBPToken, owner, roothash, court, _feeToOperator, _feeToReferee, _feeToCourt));
+    function bettingOperatorSalt(address OBPMain, address OBPToken, address owner, uint256 roothash, address court, uint256 _feeToOperator,uint256 _feeToReferee, uint256 _feeToCourt) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(OBPMain, OBPToken, owner, roothash, court, _feeToOperator, _feeToReferee, _feeToCourt));
     }
 
-    function bettingOperatorByteCode(address OBPToken, address owner, uint256 roothash, address court, uint256 _feeToOperator,uint256 _feeToReferee, uint256 _feeToCourt) public pure returns (bytes memory) {
-        return abi.encodePacked(bettingOperatorCodeHash(), abi.encode(OBPToken, owner, roothash, court, _feeToOperator, _feeToReferee, _feeToCourt));
+    function bettingOperatorByteCode(address OBPMain, address OBPToken, address owner, uint256 roothash, address court, uint256 _feeToOperator,uint256 _feeToReferee, uint256 _feeToCourt) public pure returns (bytes memory) {
+        return abi.encodePacked(bettingOperatorCodeHash(), abi.encode(OBPMain, OBPToken, owner, roothash, court, _feeToOperator, _feeToReferee, _feeToCourt));
     }
 
-        function getcreatedAddress(address OBPToken, address owner, uint256 roothash, address court) public view returns(address operator) {
-        bytes memory bytecode  = bettingOperatorByteCode(OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
-        bytes32 salt = bettingOperatorSalt(OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
+        function getcreatedAddress(address OBPMain, address OBPToken, address owner, uint256 roothash, address court) public view returns(address operator) {
+        bytes memory bytecode  = bettingOperatorByteCode(OBPMain, OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
+        bytes32 salt = bettingOperatorSalt(OBPMain, OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
         bytes32 hash = keccak256(
             abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(bytecode))
         );
         return address(uint160(uint(hash)));
     }
     
-    function createBettingOperator(address OBPToken, address owner, uint256 roothash, address court) external override returns(address operator){
-        require(allOperators[roothash] == address(0), "createBettingOperator:: this roothash is occupied, pls render another rootHash");
+    function createBettingOperator(address OBPMain, address OBPToken, address owner, uint256 roothash, address court) external override returns(address operator){
 
-        bytes memory bytecode = bettingOperatorByteCode(OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
-        bytes32 salt = bettingOperatorSalt(OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
+        bytes memory bytecode = bettingOperatorByteCode(OBPMain, OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
+        bytes32 salt = bettingOperatorSalt(OBPMain, OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
         assembly {
             operator := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
              if iszero(extcodesize(operator)) {
                  revert(0, 0)
              }
         }
-        allOperators[roothash] = operator;
+        //allOperators[roothash] = operator;
         emit OperatorCreated(operator, roothash);
     }
 

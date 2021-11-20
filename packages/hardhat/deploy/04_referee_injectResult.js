@@ -13,7 +13,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   const OBPMain = await ethers.getContract("OBPMain", deployer);
   const BettingOperatorDeployer = await ethers.getContract("BettingOperatorDeployer", deployer);
   const roothash = "123123";
-  const operatorAddress = await BettingOperatorDeployer.allOperators(roothash);
+  const operatorAddress = await OBPMain.allOperators(roothash);
   const Operator = await ethers.getContractAt("BettingOperator", operatorAddress);
   const refereeAddress = await Operator.referee();
   //result can be anounced; then close. Cosing an event allow winner to claim their payout

@@ -26,10 +26,10 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 
 //
 // Select the network you want to deploy to here:
-//
-const defaultNetwork = "localhost";
+//kovan
+const defaultNetwork = "kovan";
 
-const mainnetGwei = 21;
+const mainnetGwei = 10;
 
 function mnemonic() {
   try {
@@ -110,7 +110,7 @@ module.exports = {
       },
     },
     kovan: {
-      url: "https://kovan.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", // <---- YOUR INFURA ID! (or it won't work)
+      url: "https://kovan.infura.io/v3/2405f1072dc94dc98573c002aef7386f", // <---- YOUR INFURA ID! (or it won't work)
 
       //    url: "https://speedy-nodes-nyc.moralis.io/XXXXXXXXXXXXXXXXXXXXXXX/eth/kovan", // <---- YOUR MORALIS ID! (not limited to infura)
 
@@ -307,7 +307,7 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: "DNXJA8RX2Q3VZ4URQIWP7Z68CJXQZSC6AW",
+    apiKey: "R4JQRKXWQ5YDZWMY83127QCWJJQFX98DTU",
   },
 };
 

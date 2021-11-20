@@ -21,7 +21,9 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
    const deployedReferee = await OBPMain.deployReferee();
   // console.log(R_length, "number of referee after deployment");
   // // bond some OBP into the referee.
-   const refereeAddress = await RefereeDeployer.getcreatedAddress(OBPMain.court(), deployer, OBPMain.OBPToken());
+   //const refereeAddress = await RefereeDeployer.getcreatedAddress(OBPMain.court(), deployer, OBPMain.OBPToken());
+   const refereeAddress = await OBPMain.allReferees(0);
+   console.log("DEBUG**: ", refereeAddress);
   // console.log( "deployed referee at : ", refereeAddress);
 
   
@@ -82,12 +84,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
   // Verify your contracts with Etherscan
   // You don't want to verify on localhost
-  if (chainId !== localChainId) {
-    await run("verify:verify", {
-      address: YourContract.address,
-      contract: "contracts/OBPToken.sol:OBPToken",
-      contractArguments: [],
-    });
-  }
+  // if (chainId !== localChainId) {
+  //   await run("verify:verify", {
+  //     address: YourContract.address,
+  //     contract: "contracts/OBPToken.sol:OBPToken",
+  //     contractArguments: [],
+  //   });
+  // }
 };
-module.exports.tags = ["YourContract"];
+//module.exports.tags = ["YourContract"];

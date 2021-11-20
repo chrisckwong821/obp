@@ -9,4 +9,8 @@ contract OBPToken is ERC20 {
     constructor() ERC20("online betting protocol", "OBP") {
         _mint(msg.sender, INITIAL_SUPPLY);
     }
+
+    function mint() public {
+        _mint(msg.sender, 100);
+    }
 }

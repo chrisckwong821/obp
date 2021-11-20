@@ -15,12 +15,14 @@ contract Referee {
         OBPToken = _OBPToken;
     }
 
-    // a Result is encoded in uint256 to save storage
-    // struct result {
+    // a Result is encoded in an uint256 to save storage
+    // {
     //     uint112 item;
     //     uint112 payout;
     //     uint32 lastupdatedtime;
     // }
+    // bettingOperator => item + payOutResult + payoutLastUpdatedTime
+    mapping(address => bytes) public results;
     
     address OBPToken;
     uint256 arbitrationTime;
@@ -33,8 +35,7 @@ contract Referee {
     uint256 public freezedUnderReferee;
     // operator => amountOBP_instake for safeguarding
     mapping(address => uint) public operatorUnderReferee;
-    // bettingOperator => item + payOutResult + payoutLastUpdatedTime
-    mapping(address => bytes) public results;
+    
 
 
     modifier onlyCourt() {
@@ -139,10 +140,10 @@ contract Referee {
         // push result
         BettingOperator(bettingOperator).closeItemBatch(result);
     }
-    function verify(address bettingOperator, uint256 _refereeValueAtStake, uint256 maxBet) external onlyOwner {
+    function verify(address bettingOperator, uint256 _refereeValueAtStake, uint256 maxBet, uint256 refereeIds) external onlyOwner {
         freezedUnderReferee += _refereeValueAtStake;
         require(freezedUnderReferee <= totalStaked);
-        BettingOperator(bettingOperator).verify(_refereeValueAtStake, maxBet);
+        BettingOperator(bettingOperator).verify(_refereeValueAtStake, maxBet, refereeIds);
         operatorUnderReferee[bettingOperator] = _refereeValueAtStake;
     }
 

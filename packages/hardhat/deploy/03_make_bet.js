@@ -11,10 +11,9 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
   const OBPToken = await ethers.getContract("OBPToken", deployer);
   const OBPMain = await ethers.getContract("OBPMain", deployer);
-  const BODeployer = await ethers.getContractAt("BettingOperatorDeployer", OBPMain.IBODeployer());
 
   const roothash = "123123";
-  const operatorAddress = await BODeployer.allOperators(roothash);
+  const operatorAddress = await OBPMain.allOperators(roothash);
   const Operator = await ethers.getContractAt("BettingOperator", operatorAddress);
   console.log(operatorAddress);
 

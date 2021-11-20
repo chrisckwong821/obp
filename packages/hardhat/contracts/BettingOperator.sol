@@ -1,5 +1,6 @@
 pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./interfaces/IOBPMain.sol";
 
 contract BettingOperator {
     
@@ -10,6 +11,7 @@ contract BettingOperator {
     // use EIP 712 for typed structured data
     uint256 public roothashOfbettingItems;
     address public OBPToken;
+    address public OBPMain;
     //operator
     address public owner;
     address public court;
@@ -65,7 +67,8 @@ contract BettingOperator {
         unlocked = 1;
     }
 
-    constructor (address _OBPToken, address _owner, uint256 _roothashOfbettingItems, address _court, uint256 _feeToOperator, uint256 _feeToReferee, uint256 _feeToCourt) {
+    constructor (address _OBPMain, address _OBPToken, address _owner, uint256 _roothashOfbettingItems, address _court, uint256 _feeToOperator, uint256 _feeToReferee, uint256 _feeToCourt) {
+        OBPMain = _OBPMain;
         OBPToken = _OBPToken;
         owner = _owner;
         roothashOfbettingItems = _roothashOfbettingItems;
@@ -105,6 +108,13 @@ contract BettingOperator {
         require(msg.sender == court);
         _;
     }
+    function checkPoolPayout(uint256 _item) public view returns(uint256) {
+        return bettingItems[_item].payout;
+    }
+    
+    function checkPayoutByAddress(address _address, uint256 _item) public view returns(uint256) {
+        return bettingItems[_item].bettors[_address] * bettingItems[_item].payout / bettingItems[_item].poolSize;
+    }
 
     function withdrawOperatorFee(uint256 _amount, address _to)  external onlyOwner {
         require(unclaimedFeeToOperator - _amount >= 0, "withdrawOperatorFee:: THAT IS NO UNCLAIMED AMOUTN");
@@ -132,17 +142,11 @@ contract BettingOperator {
     }
 
 
-    function checkPoolPayout(uint256 _item) public view returns(uint256) {
-        return bettingItems[_item].payout;
-    }
-    
-    function checkPayoutByAddress(address _address, uint256 _item) public view returns(uint256) {
-        return bettingItems[_item].bettors[_address] * bettingItems[_item].payout / bettingItems[_item].poolSize;
-    }
 
 
-    function verify(uint256 _refereeValueAtStake, uint256 _maxBet) external onlyReferee {
+    function verify(uint256 _refereeValueAtStake, uint256 _maxBet, uint256 refereeIds) external onlyReferee {
         require(verified == false, "verify:: ALREADY VERIFIERD");
+        require(IOBPMain(OBPMain).allReferees(refereeIds) == referee, "verify: refereeAddress not matching the required");
         verified = true;
         refereeValueAtStake = _refereeValueAtStake;
         maxBetLimit = _maxBet;
@@ -187,7 +191,7 @@ contract BettingOperator {
         bettingItems[item].poolSize += Poolamount;
         totalOperatorBet += Poolamount;
     }
-    // this is a function to withdraw normally, unless there is OBP compensation, only 1 ERC20 transfer is involved.
+    // this is a function to withdraw normally, unless there is OBP compensation from confiscation, only 1 ERC20 transfer is involved.
     function withdraw(uint item, address _to) external {
         address bettor = msg.sender;
         require(bettingItems[item].isClosed, "the betting item is still open"); 

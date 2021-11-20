@@ -9,11 +9,10 @@ interface IBettingOperator {
     function withdrawOperatorFee(uint256 _amount, address _to)  external;
     function injectResultBatch(bytes calldata) external;
     function closeItem(uint256 item) external;
+    // the more gas-efficient way; 
     function closeItemBatch(bytes calldata) external;
     function setTotalUnclaimedPayoutAfterConfiscation() external;
     function withdrawFromFailedReferee(uint256 item, address _to) external;
-    // the more gas-efficient way; 
     
-    // In normal case there is no need to open an item as the bool is default to false; 
-    // unless it is accidentially closed
+    
 }

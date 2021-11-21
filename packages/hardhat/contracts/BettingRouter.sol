@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IBettingRouter.sol";
 import "./BettingOperator.sol";
 
-//A router is used so that a bettoken can be approved once and then used to bet on any Operators afterwards.
+/// @title A router is used so that a bettoken can be approved once and then used to bet on any Operators afterwards.
 contract BettingRouter is IBettingRouter {
     address public immutable deployer;
     address public immutable OBPToken;

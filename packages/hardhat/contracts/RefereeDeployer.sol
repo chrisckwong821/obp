@@ -4,10 +4,11 @@ pragma solidity ^0.8.0;
 import './interfaces/IRefereeDeployer.sol';
 import './Referee.sol';
 
+/// @title RefereeDeployer is called from OBPMain to deploy a referee
+/// @notice RefereeDeployer should NOT be called directly as referee deployed is not recognized by OBPMain
 contract RefereeDeployer is IRefereeDeployer {
     address public arbitrationTimeSetter;
     uint256 arbitrationTime = 1 seconds;
-    //address[] public allReferees;
 
     event RefereesCreated(address operator);
 
@@ -17,7 +18,6 @@ contract RefereeDeployer is IRefereeDeployer {
     }
 
     function refereeByteCode(uint256 _arbitrationTime, address court, address owner, address OBPToken) public pure returns (bytes memory) {
-         //return keccak256(abi.encodePacked(_arbitrationTime, court, owner, OBPToken));
          return abi.encodePacked(refereeCodeHash(), abi.encode(_arbitrationTime, court, owner, OBPToken));
      }
 
@@ -34,6 +34,7 @@ contract RefereeDeployer is IRefereeDeployer {
         return address(uint160(uint(hash)));
     }
 
+    /// @dev a 0x0 would be returned in case create2 fails due to insuffiicent gas
     function createReferee(address court, address owner, address OBPToken) external override returns(address referee){
         bytes memory bytecode = refereeByteCode(arbitrationTime, court, owner, OBPToken);
         bytes32 salt = refereeSalt(arbitrationTime, court, owner, OBPToken);

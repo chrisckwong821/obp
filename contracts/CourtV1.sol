@@ -7,7 +7,7 @@ import "./abstracts/CourtUpgradeable.sol";
 import "./interfaces/IReferee.sol";
 import "./interfaces/IBettingOperator.sol";
 
-
+/// @title V1 Court logic with basic voting and staking logic
 contract CourtV1 is CourtUpgradeable {
 
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
@@ -34,7 +34,7 @@ contract CourtV1 is CourtUpgradeable {
         mapping(address => uint256) votes;
         
     }
-    // oeprator => case
+    /// @dev oeprator => case
     mapping(address => Ruling) public  rulings;
 
     event Staked(uint amount, address staker);
@@ -42,9 +42,8 @@ contract CourtV1 is CourtUpgradeable {
     event Sued(address operator, address referee);
     event Ruled(address operator, bool isRefereeCorrupt);
 
+    /// @notice operator may collude with referee; so anyone can initiate a sue. A successful sue would only split the referee's stake to those who place a bet on that operator.
     function sue(address operator, address referee) external {       
-        // operator may collude with referee; so anyone can initiate a sue.
-        // but a successful sue would only split the referee's stake to those who place a bet on that operator.
         // bettor is recommended to bet on operator that is safeguarded by an amount of OBP that exceeds the total bet size
         Ruling storage Rule = rulings[operator];
         Rule.referee = referee;
@@ -57,9 +56,7 @@ contract CourtV1 is CourtUpgradeable {
         emit Sued(operator, referee);
     }
 
-    // allow a custom vote within your staking
-    // allow repeated voting, would add on to your previous votes;
-    // technically you can also vote for both sides, which makes yr vote meaningless.
+    /// @notice allow a custom vote within your staking, allow repeated voting, would add on to your previous votes; technically you can also vote for both sides, which makes yr vote meaningless.
     function vote(address operator, uint256 amount, bool isCorrupt) external {
         require(stakings[_msgSender()] >= amount, "vote:: STAKED AMOUNT IS INSUFFICIENRT");
         require(rulings[operator].expiry < block.timestamp, "vote:: CASE IS ALREADY CLOSED");

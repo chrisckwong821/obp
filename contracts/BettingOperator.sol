@@ -2,40 +2,41 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IOBPMain.sol";
 
+/// @title BettingOperator is the main contract that receives bet and gives payout.
+/// @notice This contract should only be deployed through calling BettingOperatorDeployer
 contract BettingOperator {
     
     bytes4 private constant SELECTOR = bytes4(keccak256(bytes('transfer(address,uint256)')));
 
-    // This is a hash of the json of all the bettingItems
-    // Once deployed, the betters and referees depend on this hash to verify their source of truth
-    // use EIP 712 for typed structured data
+    /// @dev This is a hash of the json of all the bettingItems using EIP 712 for typed structured data. Once deployed, the betters and referees depend on this hash to verify their source of truth
     uint256 public roothashOfbettingItems;
     address public OBPToken;
     address public OBPMain;
-    //operator
+
     address public owner;
     address public court;
-    //defined an invited referee
-    address public referee;
-    uint256 public refereeValueAtStake; // OBP token locked for this Operator
 
-    //defined and injected by the deployer
+    /// @dev defined an invited referee. Can only be set once
+    address public referee;
+    /// @dev OBP token locked for this Operator
+    uint256 public refereeValueAtStake; 
+
     uint256 public feeToOperator;
     uint256 public feeToReferee;
     uint256 public feeToCourt;
-    //available amount to be claimed
+    
     uint256 public unclaimedFeeToOperator;
     uint256 public unclaimedFeeToReferee;
     uint256 public unclaimedFeeToCourt;
-    //accepted token
+    /// @dev accepted token for placing bet
     address public betToken;
 
     bool public canWithdraw = false;
-    //verify by an Referee
+
     bool public verified = false;
     bool public setreferee = false;
     bool public setbettoken = false;
-    //
+    
     mapping (uint256 => Pool) public bettingItems;
 
     struct Pool{
@@ -165,8 +166,7 @@ contract BettingOperator {
         );
     }
 
-    //directly place bet without going through Router,if the operator is approved for moving yr BetToken.
-    // oherwise approve the BettingRouter for the betToken to achieve one-off aproval.
+    /// @notice directly place bet without going through Router,if the operator is approved for moving yr BetToken. Otherwise approve the BettingRouter for the betToken to achieve one-off aproval.
     function placeBet(uint item, uint amount, address bettor, bool isThroughRouter) lock external {
         require(bettingItems[item].isClosed == false, "the betting item is already closed"); 
         require(maxBetLimit - totalOperatorBet > amount, "placeBet:: the maxBet exceeds after taking this bet");
@@ -191,7 +191,7 @@ contract BettingOperator {
         bettingItems[item].poolSize += Poolamount;
         totalOperatorBet += Poolamount;
     }
-    // this is a function to withdraw normally, unless there is OBP compensation from confiscation, only 1 ERC20 transfer is involved.
+    /// @notice this is a function to withdraw normally, unless there is OBP compensation from confiscation, only 1 ERC20 transfer is involved.
     function withdraw(uint item, address _to) external {
         address bettor = msg.sender;
         require(bettingItems[item].isClosed, "the betting item is still open"); 
@@ -216,49 +216,48 @@ contract BettingOperator {
     (uint112 parsedItem, uint112 parsedPayout,) = decodeResult(item);
     // 0 can be a empty entry pushed from Referee
     if (parsedItem != 0 && bettingItems[item].isClosed == false) {
-        // allow an update of payout in case a wrong value is pushed.
-        // close is not called in this function for the purpose of changing
+        // embed an update of payout in case a wrong value is pushed.
         // when an item is closed, bettor starts to claim and there is no way to correct any mistake
         uint256 oldPayout = bettingItems[parsedItem].payout;
         bettingItems[parsedItem].payout = parsedPayout;
         totalReleasedPayout = totalReleasedPayout + parsedPayout - oldPayout;
-    }   
+        }
+    require(totalOperatorBet >= totalReleasedPayout ,"injectResult::the released payout is bigger than the total bet");
     }
-    //can be any number of result to be pushed 
+    /// @dev inject any number of result to be pushed 
     function injectResultBatch(bytes calldata data) external onlyReferee {
         uint256 item;
-        //uint256 parsedPayoutLastUpdatedTime;
+        
         bytes memory tmpdata = data;
         for (uint256 i =0; i < tmpdata.length; i+=32) {
             assembly {
                 item := mload(add(tmpdata, add(32, i)))
                 }
         (uint112 parsedItem, uint112 parsedPayout, uint32 parsedPayoutLastUpdatedTime) = decodeResult(item);
-        require(parsedItem >0 , "DEBUGOP");
-            // 0 can be a empty entry pushed from Referee
+        require(parsedItem >0 , "injectResultBatch:: 0 Ids is not allowed or non-existent");
+            // 0 can be an empty entry pushed from Referee
             if (parsedItem != 0 && bettingItems[uint256(item)].isClosed == false) {
-                // allow an update of payout in case a wrong value is pushed.
-                // close is not called in this function for the purpose of changing
+                // embed an update of payout in case a wrong value is pushed.
                 // when an item is closed, bettor starts to claim and there is no way to correct any mistake
                 uint256 oldPayout = bettingItems[parsedItem].payout;
                 bettingItems[parsedItem].payout = parsedPayout;
                 totalReleasedPayout = totalReleasedPayout + parsedPayout - oldPayout;
             }   
         }
-        // assert at last but not in the loop for efficient gas
-        require(totalOperatorBet >= totalReleasedPayout ,"injectResult::the released payout is bigger than the total bet");
-                // close the item so winner can start claiming:
-        //closeItemBatch(data);
+        // assert at last injectedPayout is not more than the totalPayout, but not in the loop for efficient gas
+        require(totalOperatorBet >= totalReleasedPayout ,"injectResultBatch::the released payout is bigger than the total bet");
+        
     }
     
     function closeItem(uint256 item) external onlyReferee {
         bettingItems[item].isClosed = true;
     }
 
+    /// @dev this is for closing item only, assuming data is parsed in itemId:payout::timestamp format, skipping every 32 bits that is payout data.
     function closeItemBatch(bytes calldata data) external onlyReferee {
         uint256 item;
         bytes memory tmpdata = data;
-        //this is for closing item only, assuming data is parsed in itemId:payout::timestamp format, skipping every 32 bits that is payout data.
+        
         for (uint i =0; i < tmpdata.length; i+=32) {
             assembly {
                 item := mload(add(tmpdata, add(32, i)))
@@ -267,9 +266,9 @@ contract BettingOperator {
             bettingItems[parsedItem].isClosed = true;
         }
     }
+    /// @dev this is to decide the portion of OBP each unclaimed bettor is eligible for. people who claim their money is not eligible
     function setTotalUnclaimedPayoutAfterConfiscation() external onlyCourt {
-        // this is to decide the portion of OBP each unclaimed bettor is eligible for.
-        // people who claim their money is not eligible
+        
         totalUnclaimedPayoutAfterConfiscation = totalOperatorBet - totalClaimedPayout;
     }
 

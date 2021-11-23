@@ -3,19 +3,19 @@ Bet with optimal fee, no chance of rugpull.
 
 ##  Contracts deployed on Kovan Testnet
 ---
-[OBPMain](https://kovan.etherscan.io/address/0x3D80793CaB90A0FaCD1Cd4Ad9326A6c9eEdCcD56#code)
+[OBPMain](https://kovan.etherscan.io/address/0x941d005bb9237Bb85Ca2e9E9e7D992189a8e4Be9#code)
 
-[OBPToken](https://kovan.etherscan.io/address/0xdC1BC2d84dFeF19478B843234c38b8696bfA81f7#code)
+[OBPToken](https://kovan.etherscan.io/address/0x1a1b943e81Ad800Bc3E8A3A51925a318299a0130#code)
 
-[CourtProxy](https://kovan.etherscan.io/address/0x07A561D151E963812e05a8a5639Ab7A61c402178#code)
+[CourtProxy](https://kovan.etherscan.io/address/0x979D08E240d3F25bd2B2ea8ac323aEd909928a39#code)
 
-[CourtLib(V1)](https://kovan.etherscan.io/address/0x983C70efc7aA04830A7093ec267dd8B2a6e3861a#code)
+[CourtLib(V1)](https://kovan.etherscan.io/address/0x0c58cF8c23CC0d9E17aD85bCDc04c0B3A76c13Fa#code)
 
-[BettingOperatorDeployer](https://kovan.etherscan.io/address/0x16210fF94FF33C59a9C61eB1Fa1Ef310856045Bb#code)
+[BettingOperatorDeployer](https://kovan.etherscan.io/address/0xD39eb61bF432eF585375bAACDf50005c0e6f944A#code)
 
-[RefereeDeployer](https://kovan.etherscan.io/address/0x0f4292c5fB9aFB0eED779522920D1f9d79a8BD41#code)
+[RefereeDeployer](https://kovan.etherscan.io/address/0xd8F343aADE0228929Df1d8F066711C75678c14D4#code)
 
-[BettingRouter](https://kovan.etherscan.io/address/0x39E7F6de3De7037f3eF48327C52Cc9336Ed80EAf#code)
+[BettingRouter](https://kovan.etherscan.io/address/0x738e5E7a1f9bf927847B212d647497eB56eF4722#code)
 
 ## High-Level Overview
 ![Screenshot 2021-11-06 at 10 03 37 PM](https://user-images.githubusercontent.com/16856703/141306704-798f782e-03fa-45cf-846d-7f2f6af46795.png)

@@ -3,14 +3,16 @@ pragma solidity ^0.8.0;
 
 import './interfaces/IBettingOperatorDeployer.sol';
 import './BettingOperator.sol';
+
+/// @title BettingOperatorDeployer is called from OBPMain to deploy a referee
+/// @notice BettingOperatorDeployer should NOT be called directly as operator deployed is not recognized by OBPMain
 contract BettingOperatorDeployer is IBettingOperatorDeployer {
     uint256 public feeToOperator = 10000; //1% TO OPERATOR
     uint256 public feeToReferee = 30000; // 3% to REFEREE
     uint256 public feeToCourt = 10000;
 
     address public feeSetter;
-    // rootHash => bettingOperator
-    //mapping(uint256 => address) public allOperators;
+    
 
     event OperatorCreated(address operator, uint256 roothash);
     function bettingOperatorCodeHash() public pure returns (bytes memory) {
@@ -26,7 +28,7 @@ contract BettingOperatorDeployer is IBettingOperatorDeployer {
         return abi.encodePacked(bettingOperatorCodeHash(), abi.encode(OBPMain, OBPToken, owner, roothash, court, _feeToOperator, _feeToReferee, _feeToCourt));
     }
 
-        function getcreatedAddress(address OBPMain, address OBPToken, address owner, uint256 roothash, address court) public view returns(address operator) {
+    function getcreatedAddress(address OBPMain, address OBPToken, address owner, uint256 roothash, address court) public view returns(address operator) {
         bytes memory bytecode  = bettingOperatorByteCode(OBPMain, OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
         bytes32 salt = bettingOperatorSalt(OBPMain, OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
         bytes32 hash = keccak256(
@@ -34,7 +36,8 @@ contract BettingOperatorDeployer is IBettingOperatorDeployer {
         );
         return address(uint160(uint(hash)));
     }
-    
+
+    /// @dev a 0x0 would be returned in case create2 fails due to insuffiicent gas
     function createBettingOperator(address OBPMain, address OBPToken, address owner, uint256 roothash, address court) external override returns(address operator){
 
         bytes memory bytecode = bettingOperatorByteCode(OBPMain, OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
@@ -45,7 +48,7 @@ contract BettingOperatorDeployer is IBettingOperatorDeployer {
                  revert(0, 0)
              }
         }
-        //allOperators[roothash] = operator;
+        
         emit OperatorCreated(operator, roothash);
     }
 

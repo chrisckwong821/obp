@@ -6,7 +6,8 @@ import './interfaces/IBettingOperatorDeployer.sol';
 
 
 
-//This is a modification from sushibar implementation, with an added mapping for storing valid Referees and their current staking totals
+/// @title major contract of entry
+/// @author Chris. CK Wong
 contract OBPMain {
     address public migrator;
     //important address for being able to confiscate OBP in referee
@@ -36,6 +37,7 @@ contract OBPMain {
     function allRefereesLength() public view returns (uint) {
         return allReferees.length;
     }
+    /// @dev address of the deployed operator would be pushed to the map; a 0x0 would be pushed in case create2 fails due to insuffiicent gas
     function deployBettingOperator(uint256 roothash) external returns(address operator){
         address owner = msg.sender;
         address OBPMain = address(this);
@@ -45,6 +47,8 @@ contract OBPMain {
         
 
     }
+
+    /// @dev address of the deployed referee would be pushed to the list; a 0x0 would be pushed in case create2 fails due to insuffiicent gas
     function deployReferee() external returns(address referee) {
         address owner = msg.sender;
         address referee = IRefereeDeployer(IRDeployer).createReferee(court, owner, OBPToken);
@@ -52,6 +56,7 @@ contract OBPMain {
 
     }
 
+    /// @notice Protocol fee collected from BettingOperator in unit of `betToken` would be converted back to OBP. Thus the pre-requisite of supporting a betToken is a Pool betToken/OBP
     function addSupportedToken(address ERC20Token) onlyMigrator external {
         supportedTokens.push(ERC20Token);
     }

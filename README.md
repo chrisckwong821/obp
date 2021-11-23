@@ -19,7 +19,8 @@ Bet with optimal fee, no chance of rugpull.
 
 
 ## High-Level Overview
-[Demo Video](https://youtu.be/Mw01llaFrg4)
+[Demo Video - Introduction over Kovan Testnet](https://youtu.be/Mw01llaFrg4)
+
 ![Screenshot 2021-11-06 at 10 03 37 PM](https://user-images.githubusercontent.com/16856703/141306704-798f782e-03fa-45cf-846d-7f2f6af46795.png)
 
 

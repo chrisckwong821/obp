@@ -13,24 +13,27 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   const OBPMain = await ethers.getContract("OBPMain", deployer);
   const BettingOperatorDeployer = await ethers.getContract("BettingOperatorDeployer", deployer);
 
-  const roothash = "123123";
+  const roothash = "ddaa1b004d25cfd8a5cc6503381eb11b1b2deaf02d17e8c18ba125649f186ef8";
   //const R_length = await RefereeDeployer.allRefereesLength();
   await OBPMain.deployBettingOperator(roothash);
 
   const operatorAddress = await OBPMain.allOperators(roothash);
-  console.log( "deployed operator at : ", operatorAddress);
+  console.log( "deployed betting operator at : ", operatorAddress);
   const RefereDeployer = await ethers.getContractAt("RefereeDeployer", OBPMain.IRDeployer());
 
-  const RefereeLength = await OBPMain.allRefereesLength();
-  for (i = 0; i < RefereeLength; i++) {
-    var invitedReferee = await OBPMain.allReferees(i);
-    console.log(invitedReferee);
-  }
+  // const RefereeLength = await OBPMain.allRefereesLength();
+  // for (i = 0; i < RefereeLength; i++) {
+  //   var invitedReferee = await OBPMain.allReferees(i);
+  //   console.log(invitedReferee);
+  // }
+  const refereeLength = await OBPMain.allRefereesLength();
+  //const refereeAddress = await RefereeDeployer.getcreatedAddress(OBPMain.court(), deployer, OBPMain.OBPToken());
+  var invitedReferee = await OBPMain.allReferees(refereeLength-1);
   const Operator = await ethers.getContractAt("BettingOperator", operatorAddress);
   //set the newly pushed referee as the referr of this operator
-  Operator.setReferee(invitedReferee);
+  await Operator.setReferee(invitedReferee);
   //use OBP token for betting for the sake of simplicity;
-  Operator.setBetToken(OBPMain.OBPToken());
+  await Operator.setBetToken(OBPMain.OBPToken());
   console.log("opertor : ", operatorAddress, "has set Referee at ",  invitedReferee);
 
   const valueAtStake = 10000;
@@ -85,12 +88,12 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
 
   // Verify your contracts with Etherscan
   // You don't want to verify on localhost
-  if (chainId !== localChainId) {
-    await run("verify:verify", {
-      address: YourContract.address,
-      contract: "contracts/OBPToken.sol:OBPToken",
-      contractArguments: [],
-    });
-  }
+  // if (chainId !== localChainId) {
+  //   await run("verify:verify", {
+  //     address: YourContract.address,
+  //     contract: "contracts/OBPToken.sol:OBPToken",
+  //     contractArguments: [],
+  //   });
+  // }
 };
-module.exports.tags = ["YourContract"];
+//module.exports.tags = ["YourContract"];

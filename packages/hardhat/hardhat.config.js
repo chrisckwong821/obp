@@ -117,6 +117,7 @@ module.exports = {
       accounts: {
         mnemonic: mnemonic(),
       },
+      gas: 3500000,
     },
     mainnet: {
       url: "https://mainnet.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad", // <---- YOUR INFURA ID! (or it won't work)
@@ -599,7 +600,7 @@ task("send", "Send ETH")
         taskArgs.gasPrice ? taskArgs.gasPrice : "1.001",
         "gwei"
       ).toHexString(),
-      gasLimit: taskArgs.gasLimit ? taskArgs.gasLimit : 24000,
+      gasLimit: 2400000,//taskArgs.gasLimit ? taskArgs.gasLimit : 2400000,
       chainId: network.config.chainId,
     };
 

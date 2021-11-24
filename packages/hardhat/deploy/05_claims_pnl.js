@@ -12,7 +12,7 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   const OBPToken = await ethers.getContract("OBPToken", deployer);
   const OBPMain = await ethers.getContract("OBPMain", deployer);
   const BettingOperatorDeployer = await ethers.getContract("BettingOperatorDeployer", deployer);
-  const roothash = "123123";
+  const roothash = "1231234567";
   const operatorAddress = await OBPMain.allOperators(roothash);
   const Operator = await ethers.getContractAt("BettingOperator", operatorAddress);
   const refereeAddress = await Operator.referee();

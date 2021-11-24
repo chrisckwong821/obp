@@ -20,15 +20,15 @@ contract BettingOperatorDeployer is IBettingOperatorDeployer {
     }
 
 
-    function bettingOperatorSalt(address OBPMain, address OBPToken, address owner, uint256 roothash, address court, uint256 _feeToOperator,uint256 _feeToReferee, uint256 _feeToCourt) public pure returns (bytes32) {
-        return keccak256(abi.encodePacked(OBPMain, OBPToken, owner, roothash, court, _feeToOperator, _feeToReferee, _feeToCourt));
+    function bettingOperatorSalt(address OBPMain, address OBPToken, address owner, uint256 roothash, address court, uint256 _feeToOperator,uint256 _feeToReferee, uint256 _feeToCourt) private returns (bytes32) {
+        return keccak256(abi.encodePacked(OBPMain, OBPToken, owner, roothash, court, _feeToOperator, _feeToReferee, _feeToCourt, block.number));
     }
 
     function bettingOperatorByteCode(address OBPMain, address OBPToken, address owner, uint256 roothash, address court, uint256 _feeToOperator,uint256 _feeToReferee, uint256 _feeToCourt) public pure returns (bytes memory) {
         return abi.encodePacked(bettingOperatorCodeHash(), abi.encode(OBPMain, OBPToken, owner, roothash, court, _feeToOperator, _feeToReferee, _feeToCourt));
     }
 
-    function getcreatedAddress(address OBPMain, address OBPToken, address owner, uint256 roothash, address court) public view returns(address operator) {
+    function getcreatedAddress(address OBPMain, address OBPToken, address owner, uint256 roothash, address court) public returns(address operator) {
         bytes memory bytecode  = bettingOperatorByteCode(OBPMain, OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
         bytes32 salt = bettingOperatorSalt(OBPMain, OBPToken, owner, roothash, court, feeToOperator, feeToReferee, feeToCourt);
         bytes32 hash = keccak256(

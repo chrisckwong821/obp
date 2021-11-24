@@ -24,8 +24,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   const OBPToken = await ethers.getContract("OBPToken", deployer);
   //await OBPToken.mint();
   //await OBPToken.mint();
-  const E32 = await OBPToken.balanceOf(deployer);
-  console.log(E32);
   //const balance = await OBPToken.balanceOf(deployer);
   //console.log("deployer balance :", balance );
   const CourtV1 = await ethers.getContract("CourtV1", deployer);
@@ -68,7 +66,6 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   const BettingOperatorDeployer = await ethers.getContract("BettingOperatorDeployer", deployer);
 
   await OBPMain.setRefereeOperatorDeployer(RefereeDeployer.address);
-  
   await OBPMain.setBettingOperatorDeployer(BettingOperatorDeployer.address);
   
 

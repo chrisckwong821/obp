@@ -2,7 +2,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./BettingOperator.sol";
+import "./interfaces/IBettingOperator.sol";
 
 /// @title Referee that bound OBPToken for injecting results in betting Operator
 /// @notice This contract should only be deployed through calling RefereeDeployer
@@ -90,7 +90,7 @@ contract Referee {
         (, , uint32 parsedPayoutLastUpdatedTime) = decodeResult(item);
         // only push result that passes the arbitration window
         if (block.timestamp > arbitrationTime + parsedPayoutLastUpdatedTime) {
-            BettingOperator(bettingOperator).injectResult(item);
+            IBettingOperator(bettingOperator).injectResult(item);
     }
 }
     function pushResultBatch(address bettingOperator) external onlyOwner {//(bytes memory data){
@@ -111,7 +111,7 @@ contract Referee {
             require(parsedItem > 0, "DEBUG: parseItem shd > 0");
          }
         // push result
-        BettingOperator(bettingOperator).injectResultBatch(data);
+        IBettingOperator(bettingOperator).injectResultBatch(data);
     }
 
     /// @dev wipe out the whole entry, then you can push again, the original result in operator would be overrided as the result is read sequentially in a list. For example result in operator {item, payout, lastupdatedtime} = [1,1000, xxxx], [1,0, xxxx] => pool for Item1 would end up with 0.
@@ -120,17 +120,17 @@ contract Referee {
     }
 
    function closeItem(address bettingOperator, uint256 item) external onlyOwner {
-        BettingOperator(bettingOperator).closeItem(item);
+        IBettingOperator(bettingOperator).closeItem(item);
    }
     function closeItemBatch(address bettingOperator) external onlyOwner {
         bytes memory result = results[bettingOperator];
         // push result
-        BettingOperator(bettingOperator).closeItemBatch(result);
+        IBettingOperator(bettingOperator).closeItemBatch(result);
     }
     function verify(address bettingOperator, uint256 _refereeValueAtStake, uint256 maxBet, uint256 refereeIds) external onlyOwner {
         freezedUnderReferee += _refereeValueAtStake;
         require(freezedUnderReferee <= totalStaked);
-        BettingOperator(bettingOperator).verify(_refereeValueAtStake, maxBet, refereeIds);
+        IBettingOperator(bettingOperator).verify(_refereeValueAtStake, maxBet, refereeIds);
         operatorUnderReferee[bettingOperator] = _refereeValueAtStake;
     }
 

@@ -21,11 +21,11 @@ contract RefereeDeployer is IRefereeDeployer {
          return abi.encodePacked(refereeCodeHash(), abi.encode(_arbitrationTime, court, owner, OBPToken));
      }
 
-     function refereeSalt(uint256 _arbitrationTime, address court, address owner, address OBPToken) public pure returns (bytes32){
-         return keccak256(abi.encodePacked(_arbitrationTime, court, owner, OBPToken));
+     function refereeSalt(uint256 _arbitrationTime, address court, address owner, address OBPToken) private returns (bytes32){
+         return keccak256(abi.encodePacked(_arbitrationTime, court, owner, OBPToken, block.number));
      }
 
-    function getcreatedAddress(address court, address owner, address OBPToken) public view returns(address referee) {
+    function getcreatedAddress(address court, address owner, address OBPToken) public returns(address referee) {
         bytes memory bytecode  = refereeByteCode(arbitrationTime, court, owner, OBPToken);
         bytes32 salt = refereeSalt(arbitrationTime, court, owner, OBPToken);
         bytes32 hash = keccak256(
@@ -41,7 +41,7 @@ contract RefereeDeployer is IRefereeDeployer {
         assembly {
             referee := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
         }
-        //allReferees.push(referee);
+        
         emit RefereesCreated(referee);
     }
 

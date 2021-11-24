@@ -11,19 +11,15 @@ module.exports = async ({ getNamedAccounts, deployments, getChainId }) => {
   
   const OBPToken = await ethers.getContract("OBPToken", deployer);
   const OBPMain = await ethers.getContract("OBPMain", deployer);
-  const RefereeDeployer = await ethers.getContract("RefereeDeployer", deployer);
-  //const BettingOperatorDeployer = await ethers.getContract("BettingOperatorDeployer", deployer);
-
-
-  // var R_length = await RefereeDeployer.allRefereesLength();
-  // //const OB_length = await BettingOperatorDeployer.allOperatorsLength();
-  // console.log(R_length, "number of referee");
-   const deployedReferee = await OBPMain.deployReferee();
-  // console.log(R_length, "number of referee after deployment");
-  // // bond some OBP into the referee.
-   //const refereeAddress = await RefereeDeployer.getcreatedAddress(OBPMain.court(), deployer, OBPMain.OBPToken());
-   const refereeAddress = await OBPMain.allReferees(0);
-   console.log("DEBUG**: ", refereeAddress);
+  var refereeLength;
+  refereeLength = await OBPMain.allRefereesLength();
+  console.log("refereeLength before : ",  refereeLength);
+  await OBPMain.deployReferee();
+  await new Promise(resolve => setTimeout(resolve, 10000));
+  refereeLength = await OBPMain.allRefereesLength();
+  console.log("refereeLength after  : ",  refereeLength);
+  const refereeAddress = await OBPMain.allReferees(refereeLength-1);
+  console.log("DEBUG**: ", refereeAddress);
   // console.log( "deployed referee at : ", refereeAddress);
 
   
